@@ -1,0 +1,82 @@
+@using System.Collections.Generic;
+@using System.Linq;
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@page "/"
+
+<div class="container">
+    <div class="row justify-content-between">
+        <div class="col-6">
+            <h3>Todo (@todos.Count(x => !x.IsDone))</h3>
+        </div>
+        <div class="col-3">
+            <button type="button" class="btn btn-primary" @onclick="@Save">Save</button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <td></td>
+                        <td>Text</td>
+                        <td>Saved</td>
+                        <td></td>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var todo in todos)
+                {
+                    <tr class="text-center">
+                       <td class="align-middle py-1"><input type="checkbox" @bind="@todo.IsDone" /></td>
+                       <td class="align-middle py-1"><input type="text" class="form-control" @bind="@todo.Title" /></td>
+                       <td class="align-middle py-1"><input type="checkbox" disabled checked="@todo.IsSaved" /></td>
+                       <td class="align-middle py-1">
+                            <button type="button" class="btn btn-outline-danger oi oi-minus" @onclick="@(() => Remove(todo))"></button>
+                       </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-10">
+            <input type="text" class="form-control" placeholder="Something todo" @bind="newTodo"/>
+        </div>
+        <div class="col-2">
+            <button type="button" class="oi oi-plus" @onclick="@AddTodo"></button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<TodoItemViewModel> todos = new List<TodoItemViewModel>();
+    private string newTodo;
+
+    protected override async Task OnInitializedAsync(){
+        todos = (await localStorage.GetItemAsync<List<TodoItem>>("todo"))
+            ?.Select(x => new TodoItemViewModel(x){ IsSaved = true })
+            ?.ToList()
+             ??  todos;
+    }
+
+    private void AddTodo()
+    {
+        if(!string.IsNullOrWhiteSpace(newTodo))
+        {
+            todos.Add(new TodoItemViewModel(new TodoItem { Title = newTodo }));
+            newTodo = string.Empty;
+        }
+    }
+
+    private void Remove(TodoItemViewModel todoToRemove)
+    {
+        todos.Remove(todoToRemove);
+    }
+
+    private async Task Save()
+    {
+        todos.ForEach(x => x.IsSaved = true);
+        await localStorage.SetItemAsync("todo", todos.Select(x => x.Unwrap()).ToList());
+    }
+}

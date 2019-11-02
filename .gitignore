@@ -289,3 +289,12 @@ __pycache__/
 *.xsd.cs
 
 **/wwwroot/lib/
+
+# Sec
+appsettings.json
+*.crt
+*.key
+*.pfx
+
+# MacOS-Specific
+*.DS_Store
