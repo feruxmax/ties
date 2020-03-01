@@ -7,7 +7,7 @@
 <div class="container">
     <div class="row justify-content-between">
         <div class="col-6">
-            <h3>Todo (@todos.Count())</h3>
+            <h3>Notions (@notions.Count())</h3>
         </div>
     </div>
     <div class="row">
@@ -20,13 +20,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                @foreach (var todo in todos)
+                @foreach (var notion in notions)
                 {
                     <tr class="text-center">
                        <td class="align-middle py-1">
-                            <input type="text" class="form-control" @bind="@todo.Title" @onfocusout="@(() => Save(todo))"/></td>
+                            <input type="text" class="form-control" @bind="@notion.Title" @onfocusout="@(() => Save(notion))"/></td>
                        <td class="align-middle py-1">
-                            <button type="button" class="btn btn-outline-danger oi oi-minus" @onclick="@(() => Remove(todo))"></button>
+                            <button type="button" class="btn btn-outline-danger oi oi-minus" @onclick="@(() => Remove(notion))"></button>
                        </td>
                     </tr>
                 }
@@ -36,44 +36,44 @@
     </div>
     <div class="row">
         <div class="col-10">
-            <input type="text" class="form-control" placeholder="Something todo" @bind="newTodo"/>
+            <input type="text" class="form-control" placeholder="Some notion" @bind="newNotion"/>
         </div>
         <div class="col-2">
-            <button type="button" class="oi oi-plus" @onclick="@AddTodo"></button>
+            <button type="button" class="oi oi-plus" @onclick="@Add"></button>
         </div>
     </div>
 </div>
 
 @code {
-    private List<TodoItem> todos = new List<TodoItem>();
-    private string newTodo;
+    private List<Notion> notions = new List<Notion>();
+    private string newNotion;
 
     protected override async Task OnInitializedAsync(){
-        todos = (await localStorage.GetItemAsync<List<TodoItem>>("todo"))
+        notions = (await localStorage.GetItemAsync<List<Notion>>("notions"))
             ?.ToList()
-             ??  todos;
+             ??  notions;
     }
 
-    private async Task AddTodo()
+    private async Task Add()
     {
-        if(!string.IsNullOrWhiteSpace(newTodo))
+        if(!string.IsNullOrWhiteSpace(newNotion))
         {
-            var newTodoItem = new TodoItem { Title = newTodo };
-            todos.Add(newTodoItem);
-            await localStorage.SetItemAsync("todo", todos);
+            var newTodoItem = new Notion { Title = newNotion };
+            notions.Add(newTodoItem);
+            await localStorage.SetItemAsync("notions", notions);
 
-            newTodo = string.Empty;
+            newNotion = string.Empty;
         }
     }
 
-    private async Task Remove(TodoItem todoToRemove)
+    private async Task Remove(Notion todoToRemove)
     {
-        todos.Remove(todoToRemove);
-        await localStorage.SetItemAsync("todo", todos);
+        notions.Remove(todoToRemove);
+        await localStorage.SetItemAsync("notions", notions);
     }
 
-    private async Task Save(TodoItem todo)
+    private async Task Save(Notion notion)
     {
-        await localStorage.SetItemAsync("todo", todos);
+        await localStorage.SetItemAsync("notions", notions);
     }
 }

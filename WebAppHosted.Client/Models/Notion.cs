@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace WebAppHosted.Client.Models
 {
-    public class TodoItem
+    public class Notion
     {
         public string Title { get; set; }
     }
