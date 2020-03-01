@@ -5,48 +5,36 @@
 @page "/"
 
 <div class="container">
-    <div class="row justify-content-between">
-        <div class="col-6">
-            <h3>Notions (@notions.Count())</h3>
-        </div>
-    </div>
-    <div class="row">
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <td>Text</td>
-                        <td></td>
-                    </tr>
-                </thead>
-                <tbody>
-                @foreach (var notion in notions)
-                {
-                    <tr class="text-center">
-                       <td class="align-middle py-1">
-                            <input type="text" class="form-control" @bind="@notion.Title" @onfocusout="@(() => Save(notion))"/></td>
-                       <td class="align-middle py-1">
-                            <button type="button" class="btn btn-outline-danger oi oi-minus" @onclick="@(() => Remove(notion))"></button>
-                       </td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        </div>
-    </div>
     <div class="row">
         <div class="col-10">
-            <input type="text" class="form-control" placeholder="Some notion" @bind="newNotion"/>
+            <div class="md-form">
+                <input type="text" class="form-control" placeholder="Some notion" list="dl" @bind="firstNotion" @bind:event="oninput"/>
+                <datalist id="dl">
+                    @foreach (var notion in notionsFiltered)
+                    {
+                        <option value="@notion.Title"></option>
+                    }
+                </datalist>
+            </div>
         </div>
-        <div class="col-2">
-            <button type="button" class="oi oi-plus" @onclick="@Add"></button>
+        <div class="col-2 allign-middle py-1">
+            <button type="button" class="btn btn-outline-success oi oi-plus @addIsHidenClass" @onclick="@Add"></button>
         </div>
     </div>
 </div>
 
 @code {
     private List<Notion> notions = new List<Notion>();
-    private string newNotion;
+    private ICollection<Notion> notionsFiltered => firstNotion != string.Empty
+        ? notions
+            .Where(x => x.Title.StartsWith(firstNotion))
+            .Take(5)
+            .ToArray()
+        : Array.Empty<Notion>();
+    private string addIsHidenClass => notionsFiltered.Count == 0 && firstNotion != string.Empty
+        ? string.Empty : "d-none";
+
+    private string firstNotion = string.Empty;
 
     protected override async Task OnInitializedAsync(){
         notions = (await localStorage.GetItemAsync<List<Notion>>("notions"))
@@ -56,13 +44,13 @@
 
     private async Task Add()
     {
-        if(!string.IsNullOrWhiteSpace(newNotion))
+        if(!string.IsNullOrWhiteSpace(firstNotion))
         {
-            var newTodoItem = new Notion { Title = newNotion };
+            var newTodoItem = new Notion { Title = firstNotion };
             notions.Add(newTodoItem);
             await localStorage.SetItemAsync("notions", notions);
 
-            newNotion = string.Empty;
+            firstNotion = string.Empty;
         }
     }
 
