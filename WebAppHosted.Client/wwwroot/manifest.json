@@ -3,7 +3,7 @@
   "name": "Ties",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff55",
+  "background_color": "#ffffff",
   "theme_color": "#03173d", 
   "icons": [
     {
