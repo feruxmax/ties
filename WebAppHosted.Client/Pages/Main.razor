@@ -1,67 +1,28 @@
-@using System.Collections.Generic;
 @using System.Linq;
 @using WebAppHosted.Client.Models;
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
 @page "/"
 
-<div class="container">
-    <div class="row">
-        <div class="col-10">
-            <div class="md-form">
-                <input type="text" class="form-control" placeholder="Some notion" list="dl" @bind="firstNotion" @bind:event="oninput"/>
-                <datalist id="dl">
-                    @foreach (var notion in notionsFiltered)
-                    {
-                        <option value="@notion.Title"></option>
-                    }
-                </datalist>
-            </div>
-        </div>
-        <div class="col-2 allign-middle py-1">
-            <button type="button" class="btn btn-outline-success oi oi-plus @addIsHidenClass" @onclick="@Add"></button>
-        </div>
-    </div>
-</div>
+<SearchOrAddInput OnAdd="@Add" Items="@_items"/>
 
 @code {
-    private List<Notion> notions = new List<Notion>();
-    private ICollection<Notion> notionsFiltered => firstNotion != string.Empty
-        ? notions
-            .Where(x => x.Title.StartsWith(firstNotion))
-            .Take(5)
-            .ToArray()
-        : Array.Empty<Notion>();
-    private string addIsHidenClass => notionsFiltered.Count == 0 && firstNotion != string.Empty
-        ? string.Empty : "d-none";
+    private List<Notion> _notions = new List<Notion>();
+    private ICollection<Item> _items => _notions.Select(x => new Item {Label = x.Title}).ToList();
 
-    private string firstNotion = string.Empty;
-
-    protected override async Task OnInitializedAsync(){
-        notions = (await localStorage.GetItemAsync<List<Notion>>("notions"))
+    protected override async Task OnInitializedAsync()
+    {
+        _notions = (await localStorage.GetItemAsync<List<Notion>>("notions"))
             ?.ToList()
-             ??  notions;
+                   ?? _notions;
     }
 
-    private async Task Add()
+    private async Task Add(string newNotion)
     {
-        if(!string.IsNullOrWhiteSpace(firstNotion))
+        if (!string.IsNullOrWhiteSpace(newNotion))
         {
-            var newTodoItem = new Notion { Title = firstNotion };
-            notions.Add(newTodoItem);
-            await localStorage.SetItemAsync("notions", notions);
-
-            firstNotion = string.Empty;
+            var newTodoItem = new Notion {Title = newNotion};
+            _notions.Add(newTodoItem);
+            await localStorage.SetItemAsync("notions", _notions);
         }
-    }
-
-    private async Task Remove(Notion todoToRemove)
-    {
-        notions.Remove(todoToRemove);
-        await localStorage.SetItemAsync("notions", notions);
-    }
-
-    private async Task Save(Notion notion)
-    {
-        await localStorage.SetItemAsync("notions", notions);
     }
 }

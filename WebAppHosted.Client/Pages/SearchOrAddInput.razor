@@ -1,0 +1,21 @@
+@using System.Linq;
+@using WebAppHosted.Client.Models;
+
+<div class="container">
+    <div class="row">
+        <div class="col-10">
+            <div class="md-form">
+                <input type="text" class="form-control" placeholder="Some notion" list="dl" @bind="_currentValue" @bind:event="oninput"/>
+                <datalist id="dl">
+                    @foreach (var item in _filterdedItems)
+                    {
+                        <option value="@item.Label"></option>
+                    }
+                </datalist>
+            </div>
+        </div>
+        <div class="col-2 allign-middle py-1">
+            <button type="button" class="btn btn-outline-success oi oi-plus @addIsHiddenClass" @onclick="@AddValue"></button>
+        </div>
+    </div>
+</div>
