@@ -5,7 +5,7 @@
     <div class="row">
         <div class="col-10">
             <div class="md-form">
-                <input type="text" class="form-control" placeholder="Some notion" list="dl" @bind="_currentValue" @bind:event="oninput"/>
+                <input type="search" class="form-control" placeholder="Some notion" list="dl" @bind="_currentValue" @bind:event="oninput"/>
                 <datalist id="dl">
                     @foreach (var item in _filterdedItems)
                     {
