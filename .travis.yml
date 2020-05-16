@@ -3,6 +3,7 @@ mono: none
 dotnet: 3.1.201
 script:
  - dotnet publish -c Release WebAppHosted.Client/WebAppHosted.Client.csproj
+ - touch WebAppHosted.Client/bin/Release/netstandard2.1/publish/wwwroot/.nojekyll
  
 deploy:
   provider: pages
