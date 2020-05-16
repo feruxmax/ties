@@ -2,4 +2,14 @@ language: csharp
 mono: none
 dotnet: 3.1.201
 script:
- - dotnet build
+ - dotnet publish -c Release WebAppHosted.Client/WebAppHosted.Client.csproj
+ 
+deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
+  keep_history: true
+  local_dir: WebAppHosted.Client/bin/Release/netstandard2.1/publish/wwwroot
+  repo: feruxmax/feruxmax.github.io
+  on:
+    branch: master 
