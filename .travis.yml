@@ -11,5 +11,6 @@ deploy:
   keep_history: true
   local_dir: WebAppHosted.Client/bin/Release/netstandard2.1/publish/wwwroot
   repo: feruxmax/feruxmax.github.io
+  target_branch: master
   on:
     branch: master 
