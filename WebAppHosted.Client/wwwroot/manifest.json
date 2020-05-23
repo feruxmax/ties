@@ -7,7 +7,7 @@
   "theme_color": "#03173d", 
   "icons": [
     {
-      "src":"ties/default-icon.png",
+      "src":"default-icon.png",
       "type":"image/png",
       "sizes":"192x192"
     }
