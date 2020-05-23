@@ -1,0 +1,29 @@
+name: Main
+
+env:
+  CLIENT_PROJECT: WebAppHosted.Client/WebAppHosted.Client.csproj
+  PUBLISH_DIR: WebAppHosted.Client/bin/Release/netstandard2.1/publish/wwwroot
+  
+on: 
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      -
+        uses: actions/checkout@v2
+      - 
+        name: Publish
+        run: dotnet publish -c Release ${{ env.CLIENT_PROJECT }}
+      -
+        name: Deploy to GitHub Pages
+        if: success()
+        uses: crazy-max/ghaction-github-pages@v2
+        with:
+          target_branch: gh-pages
+          build_dir: ${{ env.PUBLISH_DIR }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
