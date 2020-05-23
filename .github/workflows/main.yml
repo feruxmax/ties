@@ -18,6 +18,9 @@ jobs:
         name: Publish
         run: dotnet publish -c Release ${{ env.CLIENT_PROJECT }}
       -
+        name: Rewrite base 
+        run: sed -i 's#<base href="/"#<base href="/ties/"#' ${{env.PUBLISH_DIR}}/index.html
+      -
         name: Deploy to GitHub Pages
         if: success()
         uses: crazy-max/ghaction-github-pages@v2
