@@ -1,7 +1,7 @@
 {
   "short_name": "Ties",
   "name": "Ties",
-  "start_url": "/",
+  "start_url": "/ties/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#03173d", 
