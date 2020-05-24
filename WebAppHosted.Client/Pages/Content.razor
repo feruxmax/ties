@@ -1,7 +1,9 @@
+@page "/content"
 @using System.Linq;
 @using WebAppHosted.Client.Models;
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
-@page "/content"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 
 <SearchOrAddInput OnAdd="@Add" Items="@_items"/>
 

@@ -1,5 +1,9 @@
 @page "/"
-
-<p>
-    Main
-</p>
+<AuthorizeView>
+    <Authorized>
+        <p>Main page</p>
+    </Authorized>
+    <NotAuthorized>
+        <p>Please Log In</p>
+    </NotAuthorized>
+</AuthorizeView>
