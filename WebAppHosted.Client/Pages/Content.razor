@@ -1,0 +1,28 @@
+@using System.Linq;
+@using WebAppHosted.Client.Models;
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@page "/content"
+
+<SearchOrAddInput OnAdd="@Add" Items="@_items"/>
+
+@code {
+    private List<Notion> _notions = new List<Notion>();
+    private ICollection<Item> _items => _notions.Select(x => new Item {Label = x.Title}).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _notions = (await localStorage.GetItemAsync<List<Notion>>("notions"))
+            ?.ToList()
+                   ?? _notions;
+    }
+
+    private async Task Add(string newNotion)
+    {
+        if (!string.IsNullOrWhiteSpace(newNotion))
+        {
+            var newTodoItem = new Notion {Title = newNotion};
+            _notions.Add(newTodoItem);
+            await localStorage.SetItemAsync("notions", _notions);
+        }
+    }
+}

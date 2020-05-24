@@ -27,5 +27,8 @@
      <Content Update="Pages\SearchOrAddInput.razor">
        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
      </Content>
+     <Content Update="Pages\Main.razor">
+       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+     </Content>
    </ItemGroup>
 </Project>
