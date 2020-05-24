@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageReference Include="Blazored.LocalStorage" Version="2.1.6" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="3.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="3.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Build" Version="3.2.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="3.2.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
@@ -31,7 +32,14 @@
      <Content Update="Pages\Main.razor">
        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
      </Content>
-     <Content Update="Pages\LoginCallback.razor">
+     <Content Update="wwwroot\appsettings.json">
+       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+     </Content>
+     <Content Update="Shared\RedirectToLogin.razor">
+       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+     </Content>
+     <Content Update="Shared\LoginDisplay.razor">
        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
      </Content>
    </ItemGroup>
