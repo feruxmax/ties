@@ -23,6 +23,8 @@ namespace WebAppHosted.Client
             builder.Services.AddOidcAuthentication(options =>
             {
                 builder.Configuration.Bind("Local", options.ProviderOptions);
+                options.ProviderOptions.ResponseType = "token id_token";
+                options.ProviderOptions.DefaultScopes.Add("email https://www.googleapis.com/auth/drive.appdata");
             });
 
             await builder.Build().RunAsync();
