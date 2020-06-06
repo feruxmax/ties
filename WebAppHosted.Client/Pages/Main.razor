@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using WebAppHosted.Client.Services
 @inject IAccessTokenProvider TokenProvider
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
@@ -21,19 +22,8 @@
         AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         ClaimsPrincipal user = authState.User;
         Console.WriteLine(user.Identity.Name);
-        
-        var tokenResult = await TokenProvider.RequestAccessToken(
-            new AccessTokenRequestOptions
-            {
-                Scopes = new[] { "https://www.googleapis.com/auth/drive.appdata" }
-            });
-        if (tokenResult.TryGetToken(out var token))
-        {
-            Console.WriteLine($"token:[ expires: {token.Expires} scopes: {string.Join("|", token.GrantedScopes)} value: {token.Value}");
-        }
-        else
-        {
-            Console.WriteLine($"token not found");
-        }
+
+        var syncService = new SyncService(TokenProvider);
+        await syncService.Sync();
     }
 }
