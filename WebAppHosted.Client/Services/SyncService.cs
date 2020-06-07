@@ -11,6 +11,7 @@ using Google.Apis.Drive.v3;
 using Google.Apis.Http;
 using Google.Apis.Services;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
+using Newtonsoft.Json;
 using WebAppHosted.Client.Models;
 using File = Google.Apis.Drive.v3.Data.File;
 
@@ -41,9 +42,10 @@ namespace WebAppHosted.Client.Services
             });
         }
 
+
         public async Task Sync()
         {
-            Console.WriteLine("Sync");
+            Console.WriteLine("SyncTo");
             if (_storageState.Synced)
             {
                 return;
@@ -52,13 +54,111 @@ namespace WebAppHosted.Client.Services
             File file = await Find();
             if (file == null)
             {
+                Console.WriteLine("created");
                 file = await Create();
+                await SyncToRemote(file);
+            }
+            else
+            {
+                VersionedData localVersionedData = await GetRemoteDataFromStorage();
+                VersionedData remoteVersionedData = await Download(file);
+                if (remoteVersionedData.Version > localVersionedData.Version)
+                {
+                    Console.WriteLine($"remote:{remoteVersionedData.Version}->local:{localVersionedData.Version}");
+                    await UpdateStorageFromRemoteData(remoteVersionedData);
+                }
+                else if (remoteVersionedData.Version == localVersionedData.Version)
+                {
+                    if (await HasLocalChanges())
+                    {
+                        Console.WriteLine(
+                            $"local:{localVersionedData.Version}->remote:{localVersionedData.Version + 1}");
+                        await SyncToRemote(file, remoteVersionedData.Version + 1);
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        $"Versions mismatch: local:{localVersionedData.Version} remote:{remoteVersionedData.Version}");
+                }
+            }
+        }
+
+        private async Task<bool> HasLocalChanges()
+        {
+            VersionedData versionedData = await GetRemoteDataFromStorage();
+            VersionedData newVersionedData = await GetRemoteDataLocalData();
+            bool changed = JsonConvert.SerializeObject(versionedData.Data) !=
+                   JsonConvert.SerializeObject(newVersionedData.Data);
+
+            if (!changed)
+            {
+                _storageState.Synced = true;
             }
 
-            string notions =  await _storage.GetItemAsync<string>("notions");
-            Console.WriteLine(notions);
-            await Update(file, notions);
+            return changed;
+        }
+
+        private async Task UpdateStorageFromRemoteData(VersionedData data)
+        {
+            Console.WriteLine($"Synced from remote:{data.Data}");
+            await _storage.SetItemAsync("remote_data", data);
+            await _storage.SetItemAsync("notions", data.Data);
             _storageState.Synced = true;
+        }
+
+        private async Task<VersionedData> GetRemoteDataFromStorage(int newVersion = 0)
+        {
+            return await _storage.GetItemAsync<VersionedData>("remote_data") ??
+                   await GetRemoteDataLocalData(newVersion);
+        }
+
+        private async Task<VersionedData> GetRemoteDataLocalData(int newVersion = 0)
+        {
+            var notions = await _storage.GetItemAsync<List<Notion>>("notions");
+            return new VersionedData
+            {
+                Version = newVersion,
+                Data = notions
+            };
+        }
+
+        private async Task SyncToRemote(File file, int newVersion = 0)
+        {
+            var versionedData = await GetRemoteDataLocalData(newVersion);
+            await _storage.SetItemAsync("remote_data", versionedData);
+            await Upload(file, versionedData);
+            var newRemoteVersionedData = await Download(file);
+            await UpdateStorageFromRemoteData(newRemoteVersionedData);
+            _storageState.Synced = true;
+        }
+
+        private async Task<VersionedData> Download(File file)
+        {
+            FilesResource.GetRequest request = _service.Files.Get(file.Id);
+            using (var stream = new MemoryStream())
+            {
+                var rc = await request.DownloadAsync(stream);
+                stream.Seek(0, SeekOrigin.Begin);
+                using (var sr = new StreamReader(stream))
+                {
+                    string data = await sr.ReadToEndAsync();
+                    Console.WriteLine(data);
+                    return JsonConvert.DeserializeObject<VersionedData>(data);
+                }
+            }
+        }
+
+        private async Task Upload(File file, VersionedData versionedData)
+        {
+            var fileToUpdate = new File();
+            fileToUpdate.Name = file.Name;
+            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(versionedData))))
+            {
+                FilesResource.UpdateMediaUpload updateRequest =
+                    _service.Files.Update(fileToUpdate, file.Id, stream, DataFileContentType);
+                await updateRequest.UploadAsync();
+            }
         }
 
         private async Task<File> Find()
@@ -93,16 +193,11 @@ namespace WebAppHosted.Client.Services
             return createFileRequest.ResponseBody;
         }
 
-        private async Task Update(File file, string data)
+        private class VersionedData
         {
-            var fileToUpdate = new File();
-            fileToUpdate.Name = file.Name;
-            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(data)))
-            {
-                FilesResource.UpdateMediaUpload updateRequest =
-                    _service.Files.Update(fileToUpdate, file.Id, stream, DataFileContentType);
-                await updateRequest.UploadAsync();
-            }
+            public int Version { get; set; }
+            public int FormatVersion { get; set; }
+            public List<Notion> Data { get; set; }
         }
 
         private class GoogleApiAccessTokenProvider : IConfigurableHttpClientInitializer, IHttpExecuteInterceptor
