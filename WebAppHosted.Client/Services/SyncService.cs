@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
@@ -16,11 +17,14 @@ namespace WebAppHosted.Client.Services
 {
     public class SyncService
     {
+        private const string DataFileName = "data.config";
+        private const string DataFileContentType = "application/json";
         private readonly DriveService _service;
 
         public SyncService(IAccessTokenProvider accessTokenProvider)
         {
-            GoogleApiAccessTokenProvider googleApiAccessTokenProvider = new GoogleApiAccessTokenProvider(accessTokenProvider);
+            GoogleApiAccessTokenProvider googleApiAccessTokenProvider =
+                new GoogleApiAccessTokenProvider(accessTokenProvider);
 
             _service = new DriveService(new BaseClientService.Initializer()
             {
@@ -31,39 +35,57 @@ namespace WebAppHosted.Client.Services
 
         public async Task Sync()
         {
-            var fileMetadata = new File()
+            File file = await Find();
+            if (file == null)
             {
-                Name = "config.json",
-                Parents = new List<string>()
-                {
-                    "appDataFolder"
-                }
-            };
-            var json = "{data: 2}";
-            FilesResource.CreateMediaUpload createFileRequest;
-            using(var stream = new MemoryStream(Encoding.UTF8.GetBytes(json)))
-            {
-                createFileRequest = _service.Files
-                    .Create(fileMetadata, stream, "application/json");
-                createFileRequest.Fields = "id";
-                await createFileRequest.UploadAsync();
+                file = await Create();
             }
 
-            File file = createFileRequest.ResponseBody;
-            Console.WriteLine($"File ID: {file.Id}");
-            await Find();
+            var json = "{data: 2}";
+            await Update(file, json);
         }
 
-        private async Task Find()
+        private async Task<File> Find()
         {
             var request = _service.Files.List();
             request.Spaces = "appDataFolder";
             request.Fields = "nextPageToken, files(id, name)";
             request.PageSize = 10;
             var result = await request.ExecuteAsync();
-            foreach (var file in result.Files)
+            return result.Files.FirstOrDefault(x => x.Name == DataFileName);
+        }
+
+        private async Task<File> Create()
+        {
+            var fileMetadata = new File()
             {
-                Console.WriteLine($"Found file: {file.Name} ({file.Id})");
+                Name = DataFileName,
+                Parents = new List<string>()
+                {
+                    "appDataFolder"
+                }
+            };
+            FilesResource.CreateMediaUpload createFileRequest;
+            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(string.Empty)))
+            {
+                createFileRequest = _service.Files
+                    .Create(fileMetadata, stream, DataFileContentType);
+                createFileRequest.Fields = "id";
+                await createFileRequest.UploadAsync();
+            }
+
+            return createFileRequest.ResponseBody;
+        }
+
+        private async Task Update(File file, string data)
+        {
+            var fileToUpdate = new File();
+            fileToUpdate.Name = file.Name;
+            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(data)))
+            {
+                FilesResource.UpdateMediaUpload updateRequest =
+                    _service.Files.Update(fileToUpdate, file.Id, stream, DataFileContentType);
+                await updateRequest.UploadAsync();
             }
         }
 
