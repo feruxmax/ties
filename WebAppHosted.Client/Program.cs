@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using WebAppHosted.Client.Services;
 
 namespace WebAppHosted.Client
 {
@@ -26,6 +27,9 @@ namespace WebAppHosted.Client
                 options.ProviderOptions.ResponseType = "token id_token";
                 options.ProviderOptions.DefaultScopes.Add("email https://www.googleapis.com/auth/drive.appdata");
             });
+            builder.Services.AddSingleton<IStorageState, StorageState>();
+            builder.Services.AddScoped<ISyncService, SyncService>();
+            builder.Services.AddScoped<IStorage, Storage>();
 
             await builder.Build().RunAsync();
         }

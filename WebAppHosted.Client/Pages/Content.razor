@@ -1,8 +1,10 @@
 @page "/content"
 @using System.Linq;
 @using WebAppHosted.Client.Models;
-@inject Blazored.LocalStorage.ILocalStorageService localStorage
 @using Microsoft.AspNetCore.Authorization
+@using WebAppHosted.Client.Services
+@inject IStorage LocalStorage
+@inject ISyncService SyncService
 @attribute [Authorize]
 
 <SearchOrAddInput OnAdd="@Add" Items="@_items"/>
@@ -13,7 +15,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _notions = (await localStorage.GetItemAsync<List<Notion>>("notions"))
+        await SyncService.Sync();
+        _notions = (await LocalStorage.GetItemAsync<List<Notion>>("notions"))
             ?.ToList()
                    ?? _notions;
     }
@@ -24,7 +27,7 @@
         {
             var newTodoItem = new Notion {Title = newNotion};
             _notions.Add(newTodoItem);
-            await localStorage.SetItemAsync("notions", _notions);
+            await LocalStorage.SetItemAsync("notions", _notions);
         }
     }
 }

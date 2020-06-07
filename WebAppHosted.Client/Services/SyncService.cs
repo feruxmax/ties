@@ -11,18 +11,26 @@ using Google.Apis.Drive.v3;
 using Google.Apis.Http;
 using Google.Apis.Services;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
+using WebAppHosted.Client.Models;
 using File = Google.Apis.Drive.v3.Data.File;
 
 namespace WebAppHosted.Client.Services
 {
-    public class SyncService
+    public class SyncService : ISyncService
     {
         private const string DataFileName = "data.config";
         private const string DataFileContentType = "application/json";
+        private readonly IStorage _storage;
+        private readonly IStorageState _storageState;
         private readonly DriveService _service;
 
-        public SyncService(IAccessTokenProvider accessTokenProvider)
+        public SyncService(
+            IAccessTokenProvider accessTokenProvider,
+            IStorage storage,
+            IStorageState storageState)
         {
+            _storage = storage;
+            _storageState = storageState;
             GoogleApiAccessTokenProvider googleApiAccessTokenProvider =
                 new GoogleApiAccessTokenProvider(accessTokenProvider);
 
@@ -35,14 +43,22 @@ namespace WebAppHosted.Client.Services
 
         public async Task Sync()
         {
+            Console.WriteLine("Sync");
+            if (_storageState.Synced)
+            {
+                return;
+            }
+
             File file = await Find();
             if (file == null)
             {
                 file = await Create();
             }
 
-            var json = "{data: 2}";
-            await Update(file, json);
+            string notions =  await _storage.GetItemAsync<string>("notions");
+            Console.WriteLine(notions);
+            await Update(file, notions);
+            _storageState.Synced = true;
         }
 
         private async Task<File> Find()

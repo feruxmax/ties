@@ -1,10 +1,4 @@
 @page "/"
-@using Microsoft.AspNetCore.Components.Authorization
-@using System.Security.Claims
-@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
-@using WebAppHosted.Client.Services
-@inject IAccessTokenProvider TokenProvider
-@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <AuthorizeView>
     <Authorized>
@@ -14,16 +8,3 @@
         <p>Please Log In</p>
     </NotAuthorized>
 </AuthorizeView>
-
-@code{
-
-    protected override async Task OnInitializedAsync()
-    {
-        AuthenticationState authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        ClaimsPrincipal user = authState.User;
-        Console.WriteLine(user.Identity.Name);
-
-        var syncService = new SyncService(TokenProvider);
-        await syncService.Sync();
-    }
-}
