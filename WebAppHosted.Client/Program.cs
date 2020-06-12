@@ -28,7 +28,7 @@ namespace WebAppHosted.Client
                 options.ProviderOptions.DefaultScopes.Add("email https://www.googleapis.com/auth/drive.appdata");
             });
             builder.Services.AddSingleton<IStorageState, StorageState>();
-            builder.Services.AddScoped<ISyncService, SyncService>();
+            builder.Services.AddScoped<IRemoteStorage, GoogleDriveRemoteStorage>();
             builder.Services.AddScoped<IStorage, Storage>();
 
             await builder.Build().RunAsync();

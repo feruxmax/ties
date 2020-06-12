@@ -17,7 +17,7 @@ using File = Google.Apis.Drive.v3.Data.File;
 
 namespace WebAppHosted.Client.Services
 {
-    public class SyncService : ISyncService
+    public class GoogleDriveRemoteStorage : IRemoteStorage
     {
         private const string DataFileName = "data.config";
         private const string DataFileContentType = "application/json";
@@ -25,7 +25,7 @@ namespace WebAppHosted.Client.Services
         private readonly IStorageState _storageState;
         private readonly DriveService _service;
 
-        public SyncService(
+        public GoogleDriveRemoteStorage(
             IAccessTokenProvider accessTokenProvider,
             IStorage storage,
             IStorageState storageState)

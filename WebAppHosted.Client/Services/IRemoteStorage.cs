@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 
 namespace WebAppHosted.Client.Services
 {
-    public interface ISyncService
+    public interface IRemoteStorage
     {
         Task Sync();
     }
