@@ -51,17 +51,17 @@ namespace WebAppHosted.Client.Services
                 return;
             }
 
-            File file = await Find();
-            if (file == null)
+            File remoteStorageInfo = await GetRemoteStorageInfo();
+            if (remoteStorageInfo == null)
             {
                 Console.WriteLine("created");
-                file = await Create();
-                await SyncToRemote(file);
+                remoteStorageInfo = await CreateRemoteStorage();
+                await SyncToRemoteStorage(remoteStorageInfo);
             }
             else
             {
-                VersionedData localVersionedData = await GetRemoteDataFromStorage();
-                VersionedData remoteVersionedData = await Download(file);
+                VersionedData localVersionedData = await GetCachedRemoteData();
+                VersionedData remoteVersionedData = await Download(remoteStorageInfo);
                 if (remoteVersionedData.Version > localVersionedData.Version)
                 {
                     Console.WriteLine($"remote:{remoteVersionedData.Version}->local:{localVersionedData.Version}");
@@ -73,7 +73,7 @@ namespace WebAppHosted.Client.Services
                     {
                         Console.WriteLine(
                             $"local:{localVersionedData.Version}->remote:{localVersionedData.Version + 1}");
-                        await SyncToRemote(file, remoteVersionedData.Version + 1);
+                        await SyncToRemoteStorage(remoteStorageInfo, remoteVersionedData.Version + 1);
                     }
                 }
                 else
@@ -86,7 +86,7 @@ namespace WebAppHosted.Client.Services
 
         private async Task<bool> HasLocalChanges()
         {
-            VersionedData versionedData = await GetRemoteDataFromStorage();
+            VersionedData versionedData = await GetCachedRemoteData();
             VersionedData newVersionedData = await GetRemoteDataLocalData();
             bool changed = JsonConvert.SerializeObject(versionedData.Data) !=
                    JsonConvert.SerializeObject(newVersionedData.Data);
@@ -107,7 +107,7 @@ namespace WebAppHosted.Client.Services
             _storageState.Synced = true;
         }
 
-        private async Task<VersionedData> GetRemoteDataFromStorage(int newVersion = 0)
+        private async Task<VersionedData> GetCachedRemoteData(int newVersion = 0)
         {
             return await _storage.GetItemAsync<VersionedData>("remote_data") ??
                    await GetRemoteDataLocalData(newVersion);
@@ -123,19 +123,19 @@ namespace WebAppHosted.Client.Services
             };
         }
 
-        private async Task SyncToRemote(File file, int newVersion = 0)
+        private async Task SyncToRemoteStorage(File remoteStorageInfo, int newVersion = 0)
         {
             var versionedData = await GetRemoteDataLocalData(newVersion);
             await _storage.SetItemAsync("remote_data", versionedData);
-            await Upload(file, versionedData);
-            var newRemoteVersionedData = await Download(file);
+            await Upload(remoteStorageInfo, versionedData);
+            var newRemoteVersionedData = await Download(remoteStorageInfo);
             await UpdateStorageFromRemoteData(newRemoteVersionedData);
             _storageState.Synced = true;
         }
 
-        private async Task<VersionedData> Download(File file)
+        private async Task<VersionedData> Download(File remoteStorageInfo)
         {
-            FilesResource.GetRequest request = _service.Files.Get(file.Id);
+            FilesResource.GetRequest request = _service.Files.Get(remoteStorageInfo.Id);
             using (var stream = new MemoryStream())
             {
                 var rc = await request.DownloadAsync(stream);
@@ -149,19 +149,18 @@ namespace WebAppHosted.Client.Services
             }
         }
 
-        private async Task Upload(File file, VersionedData versionedData)
+        private async Task Upload(File remoteStorageInfo, VersionedData versionedData)
         {
-            var fileToUpdate = new File();
-            fileToUpdate.Name = file.Name;
+            var storageToUpdate = new File {Name = remoteStorageInfo.Name};
             using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(versionedData))))
             {
                 FilesResource.UpdateMediaUpload updateRequest =
-                    _service.Files.Update(fileToUpdate, file.Id, stream, DataFileContentType);
+                    _service.Files.Update(storageToUpdate, remoteStorageInfo.Id, stream, DataFileContentType);
                 await updateRequest.UploadAsync();
             }
         }
 
-        private async Task<File> Find()
+        private async Task<File> GetRemoteStorageInfo()
         {
             var request = _service.Files.List();
             request.Spaces = "appDataFolder";
@@ -171,9 +170,9 @@ namespace WebAppHosted.Client.Services
             return result.Files.FirstOrDefault(x => x.Name == DataFileName);
         }
 
-        private async Task<File> Create()
+        private async Task<File> CreateRemoteStorage()
         {
-            var fileMetadata = new File()
+            var remoteStorageInfo = new File()
             {
                 Name = DataFileName,
                 Parents = new List<string>()
@@ -185,7 +184,7 @@ namespace WebAppHosted.Client.Services
             using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(string.Empty)))
             {
                 createFileRequest = _service.Files
-                    .Create(fileMetadata, stream, DataFileContentType);
+                    .Create(remoteStorageInfo, stream, DataFileContentType);
                 createFileRequest.Fields = "id";
                 await createFileRequest.UploadAsync();
             }
