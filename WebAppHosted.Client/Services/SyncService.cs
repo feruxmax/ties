@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using WebAppHosted.Client.Models;
 
 namespace WebAppHosted.Client.Services
@@ -20,8 +21,9 @@ namespace WebAppHosted.Client.Services
 
         public async Task Sync()
         {
+            await InitStorageState();
             Console.WriteLine("SyncTo");
-            if (_storageState.Synced)
+            if (_storageState.Synced == true)
             {
                 return;
             }
@@ -43,7 +45,13 @@ namespace WebAppHosted.Client.Services
                     $"Versions mismatch: local:{cachedRemoteData.Version} remote:{remoteData.Version}");
             }
         }
-        
+
+        private async Task InitStorageState()
+        {
+            _storageState.Synced ??= JsonConvert.SerializeObject((await GetVersionedDataFromLocalStorage()).Data) ==
+                                     JsonConvert.SerializeObject((await GetCachedRemoteData()).Data);
+        }
+
         private async Task<VersionedData> GetCachedRemoteData(int newVersion = 0)
         {
             return await _storage.GetItemAsync<VersionedData>("remote_data") ??

@@ -2,6 +2,6 @@ namespace WebAppHosted.Client.Services
 {
     public interface IStorageState
     {
-        bool Synced { get; set; }
+        bool? Synced { get; set; }
     }
 }
