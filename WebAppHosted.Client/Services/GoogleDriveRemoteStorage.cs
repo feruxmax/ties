@@ -12,7 +12,6 @@ using Google.Apis.Http;
 using Google.Apis.Services;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Newtonsoft.Json;
-using WebAppHosted.Client.Models;
 using File = Google.Apis.Drive.v3.Data.File;
 
 namespace WebAppHosted.Client.Services
@@ -22,17 +21,14 @@ namespace WebAppHosted.Client.Services
         private const string DataFileName = "data.config";
         private const string DataFileContentType = "application/json";
         private readonly IStorage _storage;
-        private readonly IStorageState _storageState;
         private readonly DriveService _service;
         private readonly RemoteStorageInfoRepository _remoteStorageInfoRepository;
 
         public GoogleDriveRemoteStorage(
             IAccessTokenProvider accessTokenProvider,
-            IStorage storage,
-            IStorageState storageState)
+            IStorage storage)
         {
             _storage = storage;
-            _storageState = storageState;
             GoogleApiAccessTokenProvider googleApiAccessTokenProvider =
                 new GoogleApiAccessTokenProvider(accessTokenProvider);
 
@@ -44,73 +40,10 @@ namespace WebAppHosted.Client.Services
             _remoteStorageInfoRepository = new RemoteStorageInfoRepository(_service);
         }
 
-        public async Task Sync()
-        {
-            Console.WriteLine("SyncTo");
-            if (_storageState.Synced)
-            {
-                return;
-            }
-
-            VersionedData cachedRemoteData = await GetCachedRemoteData();
-            VersionedData remoteData = await GetRemoteData();
-            if (remoteData.Version > cachedRemoteData.Version)
-            {
-                Console.WriteLine($"remote:{remoteData.Version}->local:{cachedRemoteData.Version}");
-                await UpdateStorageFromRemoteData(remoteData);
-            }
-            else if (remoteData.Version == cachedRemoteData.Version)
-            {
-                await SyncToRemoteStorage(remoteData.Version + 1);
-            }
-            else
-            {
-                throw new InvalidOperationException(
-                    $"Versions mismatch: local:{cachedRemoteData.Version} remote:{remoteData.Version}");
-            }
-        }
-
-        private async Task UpdateStorageFromRemoteData(VersionedData data)
-        {
-            Console.WriteLine($"Synced from remote:{data.Data}");
-            await _storage.SetItemAsync("remote_data", data);
-            await _storage.SetItemAsync("notions", data.Data);
-            _storageState.Synced = true;
-        }
-
-        private async Task<VersionedData> GetCachedRemoteData(int newVersion = 0)
-        {
-            return await _storage.GetItemAsync<VersionedData>("remote_data") ??
-                   await GetVersionedDataFromLocalStorage(newVersion);
-        }
-
-        private async Task<VersionedData> GetVersionedDataFromLocalStorage(int newVersion = 0)
-        {
-            var notions = await _storage.GetItemAsync<List<Notion>>("notions");
-            return new VersionedData
-            {
-                Version = newVersion,
-                Data = notions
-            };
-        }
-
-        private async Task<VersionedData> SyncToRemoteStorage(int newVersion = 0)
-        {
-            VersionedData newRemoteData = await GetVersionedDataFromLocalStorage(newVersion);
-            await _storage.SetItemAsync("remote_data", newRemoteData);
-            await Upload(newRemoteData);
-            VersionedData remoteData = await GetRemoteData();
-            await UpdateStorageFromRemoteData(remoteData);
-            _storageState.Synced = true;
-
-            return remoteData;
-        }
-
-        private async Task<VersionedData> GetRemoteData()
+        public async Task<VersionedData> GetRemoteData()
         {
             var remoteStorageInfo = await _remoteStorageInfoRepository.GetRemoteStorageInfo();
             FilesResource.GetRequest request = _service.Files.Get(remoteStorageInfo.Id);
-            VersionedData remoteData;
             using (var stream = new MemoryStream())
             {
                 var rc = await request.DownloadAsync(stream);
@@ -119,14 +52,12 @@ namespace WebAppHosted.Client.Services
                 {
                     string data = await sr.ReadToEndAsync();
                     Console.WriteLine(data);
-                     remoteData = JsonConvert.DeserializeObject<VersionedData>(data);
+                    return JsonConvert.DeserializeObject<VersionedData>(data);
                 }
             }
-
-            return remoteData ?? await SyncToRemoteStorage();
         }
 
-        private async Task Upload(VersionedData data)
+        public async Task Upload(VersionedData data)
         {
             var storageToUpdate = new File {Name = (await _remoteStorageInfoRepository.GetRemoteStorageInfo()).Name};
             using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(data))))
@@ -136,13 +67,6 @@ namespace WebAppHosted.Client.Services
                         (await _remoteStorageInfoRepository.GetRemoteStorageInfo()).Id, stream, DataFileContentType);
                 await updateRequest.UploadAsync();
             }
-        }
-
-        private class VersionedData
-        {
-            public int Version { get; set; }
-            public int FormatVersion { get; set; }
-            public List<Notion> Data { get; set; }
         }
 
         private class RemoteStorageInfoRepository
@@ -179,7 +103,7 @@ namespace WebAppHosted.Client.Services
                 request.Fields = "nextPageToken, files(id, name)";
                 request.PageSize = 10;
                 var result = await request.ExecuteAsync();
-                _remoteStorageInfo = result.Files.FirstOrDefault(x => x.Name == DataFileName);
+                _remoteStorageInfo = result.Files.FirstOrDefault(x => x.Name == GoogleDriveRemoteStorage.DataFileName);
                 return _remoteStorageInfo;
             }
 
@@ -187,7 +111,7 @@ namespace WebAppHosted.Client.Services
             {
                 var remoteStorageInfo = new File()
                 {
-                    Name = DataFileName,
+                    Name = GoogleDriveRemoteStorage.DataFileName,
                     Parents = new List<string>()
                     {
                         "appDataFolder"
@@ -197,7 +121,7 @@ namespace WebAppHosted.Client.Services
                 using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(string.Empty)))
                 {
                     createFileRequest = _service.Files
-                        .Create(remoteStorageInfo, stream, DataFileContentType);
+                        .Create(remoteStorageInfo, stream, GoogleDriveRemoteStorage.DataFileContentType);
                     createFileRequest.Fields = "id";
                     await createFileRequest.UploadAsync();
                 }

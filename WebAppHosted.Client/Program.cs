@@ -29,6 +29,7 @@ namespace WebAppHosted.Client
             });
             builder.Services.AddSingleton<IStorageState, StorageState>();
             builder.Services.AddScoped<IRemoteStorage, GoogleDriveRemoteStorage>();
+            builder.Services.AddScoped<ISyncService, SyncService>();
             builder.Services.AddScoped<IStorage, Storage>();
 
             await builder.Build().RunAsync();

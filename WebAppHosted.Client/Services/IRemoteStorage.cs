@@ -4,6 +4,7 @@ namespace WebAppHosted.Client.Services
 {
     public interface IRemoteStorage
     {
-        Task Sync();
+        Task<VersionedData> GetRemoteData();
+        Task Upload(VersionedData data);
     }
 }

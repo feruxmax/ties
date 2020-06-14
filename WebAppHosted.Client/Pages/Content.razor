@@ -4,7 +4,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using WebAppHosted.Client.Services
 @inject IStorage LocalStorage
-@inject IRemoteStorage RemoteStorage
+@inject ISyncService SyncService
 @attribute [Authorize]
 
 <SearchOrAddInput OnAdd="@Add" Items="@_items"/>
@@ -15,7 +15,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await RemoteStorage.Sync();
+        await SyncService.Sync();
         _notions = (await LocalStorage.GetItemAsync<List<Notion>>("notions"))
             ?.ToList()
                    ?? _notions;
