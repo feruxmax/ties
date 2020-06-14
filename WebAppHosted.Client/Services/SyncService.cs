@@ -29,7 +29,7 @@ namespace WebAppHosted.Client.Services
             }
 
             VersionedData cachedRemoteData = await GetCachedRemoteData();
-            VersionedData remoteData = await _remoteStorage.GetRemoteData() ?? await SyncToRemoteStorage();
+            VersionedData remoteData = await _remoteStorage.GetRemoteData() ?? await SyncToRemoteStorage(cachedRemoteData.Version);
             if (remoteData.Version > cachedRemoteData.Version)
             {
                 Console.WriteLine($"remote:{remoteData.Version}->local:{cachedRemoteData.Version}");
@@ -76,7 +76,7 @@ namespace WebAppHosted.Client.Services
             _storageState.Synced = true;
         }
         
-        private async Task<VersionedData> SyncToRemoteStorage(int newVersion = 0)
+        private async Task<VersionedData> SyncToRemoteStorage(int newVersion)
         {
             VersionedData newRemoteData = await GetVersionedDataFromLocalStorage(newVersion);
             await _storage.SetItemAsync("remote_data", newRemoteData);
