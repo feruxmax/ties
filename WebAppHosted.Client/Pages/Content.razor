@@ -11,7 +11,7 @@
 
 @code {
     private List<Notion> _notions = new List<Notion>();
-    private ICollection<Item> _items => _notions.Select(x => new Item {Label = x.Title}).ToList();
+    private ICollection<Item> _items => _notions.Select(x => new Item(x.Title)).ToList();
 
     protected override async Task OnInitializedAsync()
     {

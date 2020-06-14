@@ -1,12 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Reflection;
+using Newtonsoft.Json;
 
 namespace WebAppHosted.Client.Models
 {
     public class Notion
     {
-        public string Title { get; set; }
+        public string Title { get; set; } = null!; // todo: make immutable after .net5.0
     }
 }

@@ -72,7 +72,7 @@ namespace WebAppHosted.Client.Services
         private class RemoteStorageInfoRepository
         {
             private readonly DriveService _service;
-            private File _remoteStorageInfo;
+            private File? _remoteStorageInfo;
 
             public RemoteStorageInfoRepository(DriveService service)
             {

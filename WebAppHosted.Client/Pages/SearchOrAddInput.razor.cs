@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
-using WebAppHosted.Client.Models;
 
 namespace WebAppHosted.Client.Pages
 {
@@ -13,7 +12,7 @@ namespace WebAppHosted.Client.Pages
         public EventCallback<string> OnAdd { get; set; }
 
         [Parameter]
-        public ICollection<Item> Items { get; set; }
+        public ICollection<Item>? Items { get; set; }
 
         private string addIsHiddenClass => _filterdedItems.Count == 0 && _currentValue != string.Empty
             ? string.Empty
@@ -37,6 +36,10 @@ namespace WebAppHosted.Client.Pages
 
     public class Item
     {
-        public string Label { get; set; }
+        public string Label { get; }
+        public Item(string label)
+        {
+            Label = label;
+        }
     }
 }
