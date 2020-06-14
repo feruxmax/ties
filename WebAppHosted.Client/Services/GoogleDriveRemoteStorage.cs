@@ -69,12 +69,7 @@ namespace WebAppHosted.Client.Services
                 }
                 else if (remoteData.Version == cachedRemoteData.Version)
                 {
-                    if (await HasLocalChanges())
-                    {
-                        Console.WriteLine(
-                            $"local:{cachedRemoteData.Version}->remote:{cachedRemoteData.Version + 1}");
-                        await SyncToRemoteStorage(remoteStorageInfo, remoteData.Version + 1);
-                    }
+                    await SyncToRemoteStorage(remoteStorageInfo, remoteData.Version + 1);
                 }
                 else
                 {
@@ -82,21 +77,6 @@ namespace WebAppHosted.Client.Services
                         $"Versions mismatch: local:{cachedRemoteData.Version} remote:{remoteData.Version}");
                 }
             }
-        }
-
-        private async Task<bool> HasLocalChanges()
-        {
-            VersionedData cachedRemoteData = await GetCachedRemoteData();
-            VersionedData newVersionedData = await GetVersionedDataFromLocalStorage();
-            bool changed = JsonConvert.SerializeObject(cachedRemoteData.Data) !=
-                   JsonConvert.SerializeObject(newVersionedData.Data);
-
-            if (!changed)
-            {
-                _storageState.Synced = true;
-            }
-
-            return changed;
         }
 
         private async Task UpdateStorageFromRemoteData(VersionedData data)

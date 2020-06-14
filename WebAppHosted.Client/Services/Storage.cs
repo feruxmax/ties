@@ -14,7 +14,6 @@ namespace WebAppHosted.Client.Services
             _storageState = storageState;
         }
 
-
         public Task<T> GetItemAsync<T>(string key)
         {
             return _localStorage.GetItemAsync<T>(key);
