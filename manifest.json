@@ -1,0 +1,15 @@
+{
+  "short_name": "Ties",
+  "name": "Ties",
+  "start_url": "/ties/",
+  "display": "standalone",
+  "background_color": "rgba(0, 0, 0, 0.1)",
+  "theme_color": "#03173d", 
+  "icons": [
+    {
+      "src":"default-icon.png",
+      "type":"image/png",
+      "sizes":"192x192"
+    }
+  ]
+}
