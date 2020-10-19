@@ -3,7 +3,7 @@ name: Main
 env:
   CLIENT_PROJECT: WebAppHosted.Client/WebAppHosted.Client.csproj
   INDEX_HTML: WebAppHosted.Client/wwwroot/index.html
-  PUBLISH_DIR: WebAppHosted.Client/bin/Release/netstandard2.1/publish/wwwroot
+  PUBLISH_DIR: WebAppHosted.Client/bin/Release/net5.0/publish/wwwroot
   
 on: 
   push:
