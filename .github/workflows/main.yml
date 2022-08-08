@@ -1,5 +1,5 @@
 name: Main
-
+ 
 env:
   CLIENT_PROJECT: WebAppHosted.Client/WebAppHosted.Client.csproj
   INDEX_HTML: WebAppHosted.Client/wwwroot/index.html
